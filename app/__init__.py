@@ -41,3 +41,7 @@ def create_app():
         app.register_blueprint(auth)
         db.create_all()
     return app
+
+# Create a default app instance for direct import
+# This allows 'from app import app' to work
+app = create_app()

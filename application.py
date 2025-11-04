@@ -1,9 +1,12 @@
-
 #!/usr/bin/env python3
 """
 Flask application entry point for Render deployment
+This avoids naming conflicts with the app/ folder
 """
 import os
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+
 from app import create_app, db
 
 # Create the Flask application using the factory pattern
