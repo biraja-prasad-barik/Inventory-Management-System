@@ -13,9 +13,14 @@ login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__, template_folder='templates', static_folder='static')
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
+    
+    # Configuration
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///inventory.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # For production deployment
+    app.config['WTF_CSRF_TIME_LIMIT'] = None
 
     db.init_app(app)
     csrf.init_app(app)
