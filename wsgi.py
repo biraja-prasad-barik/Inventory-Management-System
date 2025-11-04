@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Main Flask application entry point for Render deployment
+WSGI entry point for Render deployment
 """
 import os
 from app import create_app, db
 
-# Create the Flask application
+# Create the Flask application using the factory pattern
 app = create_app()
 
 # Initialize database on first run
