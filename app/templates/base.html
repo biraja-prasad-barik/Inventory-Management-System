@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventory Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    
+    <div class="d-flex">
+        <div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; min-height: 100vh;">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <i class="bi bi-box-seam-fill me-2"></i>
+                <span class="fs-4">Inventory Pro</span>
+            </a>
+            <hr>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="{{ url_for('main.dashboard') }}" class="nav-link text-white {% if 'dashboard' in request.path %}active{% endif %}">
+                        <i class="bi bi-grid-fill me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('main.inventory') }}" class="nav-link text-white {% if 'inventory' in request.path %}active{% endif %}">
+                        <i class="bi bi-boxes me-2"></i> Inventory Items
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('main.invoices') }}" class="nav-link text-white {% if 'invoices' in request.path %}active{% endif %}">
+                        <i class="bi bi-receipt-cutoff me-2"></i> Invoices
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('main.customers') }}" class="nav-link text-white {% if 'customers' in request.path %}active{% endif %}">
+                        <i class="bi bi-people-fill me-2"></i> Customers
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('main.transactions') }}" class="nav-link text-white {% if 'transactions' in request.path %}active{% endif %}">
+                        <i class="bi bi-arrow-down-up me-2"></i> Transactions
+                    </a>
+                </li>
+            </ul>
+            <hr>
+            {% if current_user.is_authenticated %}
+                <div class="text-white-50 small mb-2">
+                    <i class="bi bi-person-circle me-1"></i> {{ current_user.email }}
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link text-white">
+                    <i class="bi bi-box-arrow-left me-2"></i> Sign Out
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="flex-grow-1 p-4" style="background-color: #f8f9fa;">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

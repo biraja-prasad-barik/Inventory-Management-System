@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - InventoryPro{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_items }}</h4>
+                        <p class="card-text">Total Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-boxes display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">₹{{ "%.2f"|format(inventory_value) }}</h4>
+                        <p class="card-text">Inventory Value</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-currency-rupee display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ low_stock_items }}</h4>
+                        <p class="card-text">Low Stock Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-exclamation-triangle display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_customers }}</h4>
+                        <p class="card-text">Total Customers</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-people display-6"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Activity tracking will be implemented in future updates.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.add_item') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add New Item
+                    </a>
+                    <a href="{{ url_for('main.inventory') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-boxes"></i> View Inventory
+                    </a>
+                    <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-people"></i> Manage Customers
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

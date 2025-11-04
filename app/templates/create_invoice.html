@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Create Invoice - InventoryPro{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Create Invoice</h1>
+    <a href="{{ url_for('main.invoices') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Invoices
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Invoice Number *</label>
+                                <input type="text" class="form-control" name="invoice_number" 
+                                       value="INV-{{ range(1000, 9999) | random }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Customer *</label>
+                                <select class="form-select" name="customer_id" required>
+                                    <option value="">Select Customer</option>
+                                    {% for customer in customers %}
+                                        <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.email }})</option>
+                                    {% endfor %}
+                                </select>
+                                {% if not customers %}
+                                    <div class="form-text">
+                                        <a href="{{ url_for('main.customers') }}" class="text-decoration-none">
+                                            Add customers first to create invoices
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" name="status" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Total Amount (₹) *</label>
+                                <input type="number" class="form-control" name="total_amount" 
+                                       step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Available Items</h5>
+                        {% if items %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>SKU</th>
+                                            <th>Available</th>
+                                            <th>Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in items %}
+                                        <tr>
+                                            <td>{{ item.name }}</td>
+                                            <td><code>{{ item.sku }}</code></td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>₹{{ "%.2f"|format(item.price) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">
+                                <a href="{{ url_for('main.add_item') }}" class="text-decoration-none">
+                                    Add inventory items first
+                                </a>
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" {% if not customers %}disabled{% endif %}>
+                            <i class="bi bi-check-circle"></i> Create Invoice
+                        </button>
+                        <a href="{{ url_for('main.invoices') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.add_customer') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-person-plus"></i> Add Customer
+                    </a>
+                    <a href="{{ url_for('main.add_item') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-box"></i> Add Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

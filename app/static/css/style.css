@@ -1,0 +1,6 @@
+/* Basic starter CSS */
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background:#f6f7fb; color:#222; }
+.sidebar { width: 220px; background:#222; color:#fff; height:100vh; position:fixed; padding:1rem; }
+.sidebar a { color:#ddd; text-decoration:none; display:block; margin:0.4rem 0; }
+.content { margin-left:240px; padding:1.5rem; }
+.card { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }

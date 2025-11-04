@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}Transactions - InventoryPro{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Transaction History</h1>
+        <p class="text-muted mb-0">Track all inventory movements and changes</p>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <select class="form-select" id="transactionFilter">
+            <option value="all">All Transactions</option>
+            <option value="items">Item Changes</option>
+            <option value="customers">Customer Activities</option>
+            <option value="invoices">Invoice Activities</option>
+        </select>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if recent_items or recent_customers or recent_invoices %}
+            <div class="timeline">
+                <!-- Recent Invoice Activities -->
+                {% for invoice in recent_invoices %}
+                <div class="timeline-item" data-type="invoices">
+                    <div class="timeline-marker bg-primary">
+                        <i class="bi bi-receipt text-white"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6 class="mb-1">Invoice Created</h6>
+                        <p class="mb-1">Invoice {{ invoice.invoice_number }} for {{ invoice.customer.name }}</p>
+                        <small class="text-muted">
+                            Amount: ₹{{ "%.2f"|format(invoice.total_amount) }} • 
+                            Status: {{ invoice.status.title() }} • 
+                            {{ invoice.created_at.strftime('%d %b %Y at %I:%M %p') }}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Recent Customer Activities -->
+                {% for customer in recent_customers %}
+                <div class="timeline-item" data-type="customers">
+                    <div class="timeline-marker bg-info">
+                        <i class="bi bi-person-plus text-white"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6 class="mb-1">Customer Added</h6>
+                        <p class="mb-1">{{ customer.name }} ({{ customer.email }})</p>
+                        <small class="text-muted">{{ customer.created_at.strftime('%d %b %Y at %I:%M %p') }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Recent Item Activities -->
+                {% for item in recent_items %}
+                <div class="timeline-item" data-type="items">
+                    <div class="timeline-marker bg-success">
+                        <i class="bi bi-box text-white"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h6 class="mb-1">Item Added/Updated</h6>
+                        <p class="mb-1">{{ item.name }} ({{ item.sku }})</p>
+                        <small class="text-muted">
+                            Quantity: {{ item.quantity }} • 
+                            Price: ₹{{ "%.2f"|format(item.price) }} • 
+                            Value: ₹{{ "%.2f"|format(item.value) }}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-clock-history display-1 text-muted"></i>
+                <h3 class="mt-3">No transactions found</h3>
+                <p class="text-muted">Transactions will appear here as you manage your inventory.</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ url_for('main.add_item') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add Item
+                    </a>
+                    <a href="{{ url_for('main.customers') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-plus"></i> Add Customer
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 3px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+</style>
+
+<script>
+document.getElementById('transactionFilter').addEventListener('change', function(e) {
+    const filterValue = e.target.value;
+    const items = document.querySelectorAll('.timeline-item');
+    
+    items.forEach(item => {
+        if (filterValue === 'all' || item.dataset.type === filterValue) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
