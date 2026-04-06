@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Branch Selector -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Dashboard</h2>
+                <div class="d-flex align-items-center gap-3">
+                    <select class="form-select" id="branchSelector" onchange="changeBranch(this.value)">
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}" {% if current_branch and branch.id==current_branch.id
+                            %}selected{% endif %}>
+                            {{ branch.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary position-relative" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i>
+                            {% if unread_notifications|length > 0 %}
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_notifications|length }}
+                            </span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end"
+                            style="max-height: 400px; overflow-y: auto; min-width: 300px;">
+                            <li>
+                                <h6 class="dropdown-header">Notifications</h6>
+                            </li>
+                            {% if unread_notifications %}
+                            {% for notif in unread_notifications %}
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="markAsRead({{ notif.id }})">
+                                    <small class="text-muted">{{ notif.created_at.strftime('%Y-%m-%d %H:%M')
+                                        }}</small><br>
+                                    <span
+                                        class="badge bg-{{ 'warning' if notif.notification_type == 'low_stock' else 'danger' if notif.notification_type == 'expiry' else 'info' }}">
+                                        {{ notif.notification_type.replace('_', ' ').title() }}
+                                    </span>
+                                    {{ notif.message }}
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% endfor %}
+                            <li><a class="dropdown-item text-center" href="#" onclick="markAllAsRead()">Mark all as
+                                    read</a></li>
+                            {% else %}
+                            <li><span class="dropdown-item text-muted">No new notifications</span></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Sales</h5>
+                    <h2>${{ "%.2f"|format(today_sales) }}</h2>
+                    <small>Total revenue today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Dues</h5>
+                    <h2>${{ "%.2f"|format(pending_dues) }}</h2>
+                    <small>Unpaid credit</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">This Month's Profit</h5>
+                    <h2>${{ "%.2f"|format(month_profit) }}</h2>
+                    <small>Income - Expenses</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Low Stock Items</h5>
+                    <h2>{{ low_stock_count }}</h2>
+                    <small>Items need restocking</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Weekly Sales Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Expense Breakdown by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenseBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Profit vs Expense (Last 30 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="profitExpenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Payment Type Ratio</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Widgets -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Invoices</h5>
+                </div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    {% if recent_invoices %}
+                    <ul class="list-group list-group-flush">
+                        {% for invoice in recent_invoices %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ invoice.invoice_number }}</strong><br>
+                                <small>{{ invoice.customer.name }}</small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if invoice.status == 'paid' else 'warning' }}">
+                                ${{ "%.2f"|format(invoice.total_amount) }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No recent invoices</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Expiring Soon (Next 7 Days)</h5>
+                </div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    {% if expiring_items %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in expiring_items %}
+                        <li class="list-group-item">
+                            <strong>{{ item.name }}</strong><br>
+                            <small class="text-danger">Expires: {{ item.expiry_date.strftime('%Y-%m-%d') }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No items expiring soon</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('invoice.create_invoice') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Create Invoice
+                        </a>
+                        <a href="{{ url_for('inventory.add_item') }}" class="btn btn-success">
+                            <i class="bi bi-box-seam"></i> Add Item
+                        </a>
+                        <a href="{{ url_for('expense.expenses') }}" class="btn btn-warning">
+                            <i class="bi bi-cash-stack"></i> Add Expense
+                        </a>
+                        <a href="{{ url_for('due.dues') }}" class="btn btn-info">
+                            <i class="bi bi-credit-card"></i> View Dues
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Get branch ID from data attribute or set to null
+    const branchId = {{ current_branch.id|default ('null', true) }};
+
+    // Check if branch exists before loading charts
+    if (branchId !== null && branchId !== undefined) {
+        // Weekly Sales Chart
+        fetch('/api/weekly-sales?branch_id=' + branchId)
+            .then(res => res.json())
+            .then(data => {
+                new Chart(document.getElementById('weeklySalesChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Sales ($)',
+                            data: data.data,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Expense Breakdown Chart
+        fetch('/api/expense-breakdown?branch_id=' + branchId)
+            .then(res => res.json())
+            .then(data => {
+                new Chart(document.getElementById('expenseBreakdownChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.data,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.5)',
+                                'rgba(54, 162, 235, 0.5)',
+                                'rgba(255, 206, 86, 0.5)',
+                                'rgba(75, 192, 192, 0.5)',
+                                'rgba(153, 102, 255, 0.5)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+            });
+
+        // Profit vs Expense Chart
+        fetch('/api/profit-vs-expense?branch_id=' + branchId)
+            .then(res => res.json())
+            .then(data => {
+                new Chart(document.getElementById('profitExpenseChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Income',
+                            data: data.income,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1
+                        }, {
+                            label: 'Expense',
+                            data: data.expense,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Payment Type Chart
+        fetch('/api/payment-type-ratio?branch_id=' + branchId)
+            .then(res => res.json())
+            .then(data => {
+                new Chart(document.getElementById('paymentTypeChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.data,
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.5)',
+                                'rgba(54, 162, 235, 0.5)',
+                                'rgba(255, 206, 86, 0.5)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+            });
+    }
+
+
+
+    function changeBranch(branchId) {
+        window.location.href = '{{ url_for("dashboard.dashboard") }}?branch_id=' + branchId;
+    }
+
+    function markAsRead(notificationId) {
+        fetch('/notifications/mark-read/' + notificationId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(() => location.reload());
+    }
+
+    function markAllAsRead() {
+        fetch('/notifications/mark-all-read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(() => location.reload());
+    }
+</script>
+{% endblock %}

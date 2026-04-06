@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% block title %}Inventory Monitor - InventoryPro{% endblock %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+.monitor-wrap { font-family: 'Inter', sans-serif; }
+
+/* ── Header ── */
+.monitor-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f3460 100%);
+    border-radius: 18px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 32px rgba(15,52,96,.35);
+}
+.monitor-header-left { display:flex; align-items:center; gap:18px; }
+.monitor-icon {
+    width:56px; height:56px; border-radius:14px;
+    background: linear-gradient(135deg,#ef4444,#dc2626);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px;
+    box-shadow: 0 6px 20px rgba(239,68,68,.4);
+    animation: pulse-icon 2s infinite;
+}
+@keyframes pulse-icon {
+    0%,100%{box-shadow:0 6px 20px rgba(239,68,68,.4);}
+    50%     {box-shadow:0 6px 30px rgba(239,68,68,.7);}
+}
+.monitor-header h2 { color:#fff; margin:0; font-size:1.6rem; font-weight:800; letter-spacing:-.02em; }
+.monitor-header p  { color:rgba(255,255,255,.65); margin:3px 0 0; font-size:.85rem; }
+.run-btn {
+    padding:12px 28px; border:none; border-radius:12px; cursor:pointer;
+    background:linear-gradient(135deg,#ef4444,#b91c1c);
+    color:#fff; font-weight:700; font-size:.95rem;
+    display:flex; align-items:center; gap:10px;
+    transition:all .2s; box-shadow:0 4px 16px rgba(239,68,68,.4);
+}
+.run-btn:hover   { transform:translateY(-2px); box-shadow:0 8px 24px rgba(239,68,68,.5); }
+.run-btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+/* ── Stat Cards ── */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
+.stat-card {
+    background:#fff; border-radius:14px; padding:20px 22px;
+    border-left:5px solid #e5e7eb;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+    transition:transform .2s;
+}
+.stat-card:hover { transform:translateY(-3px); }
+.stat-card.critical   { border-color:#ef4444; }
+.stat-card.low        { border-color:#f59e0b; }
+.stat-card.decreasing { border-color:#8b5cf6; }
+.stat-card.ok         { border-color:#10b981; }
+.stat-card.total-c    { border-color:#3b82f6; }
+.stat-label { font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#6b7280; margin-bottom:6px; }
+.stat-value { font-size:2.2rem; font-weight:800; line-height:1; }
+.critical   .stat-value { color:#ef4444; }
+.low        .stat-value { color:#f59e0b; }
+.decreasing .stat-value { color:#8b5cf6; }
+.ok         .stat-value { color:#10b981; }
+.total-c    .stat-value { color:#3b82f6; }
+
+/* ── Main Grid ── */
+.monitor-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media(max-width:900px){ .monitor-grid{ grid-template-columns:1fr; } }
+
+/* ── Panel ── */
+.panel {
+    background:#fff; border-radius:16px;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+    overflow:hidden;
+}
+.panel-header {
+    padding:16px 22px; display:flex; align-items:center; gap:12px;
+    border-bottom:1px solid #f1f5f9;
+}
+.panel-header h5 { margin:0; font-size:1rem; font-weight:700; color:#1e293b; }
+.panel-badge {
+    margin-left:auto; padding:3px 10px; border-radius:20px;
+    font-size:.72rem; font-weight:700;
+}
+.panel-body { padding:18px 22px; }
+
+/* ── Product Alert Row ── */
+.product-row {
+    display:flex; align-items:center; gap:14px;
+    padding:12px 0; border-bottom:1px solid #f8fafc;
+    animation:fadeRow .4s ease-out both;
+}
+.product-row:last-child { border-bottom:none; }
+@keyframes fadeRow { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+.product-dot {
+    width:38px; height:38px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0;
+}
+.dot-critical   { background:#fef2f2; }
+.dot-low        { background:#fffbeb; }
+.dot-decreasing { background:#f5f3ff; }
+.dot-ok         { background:#ecfdf5; }
+.product-info { flex:1; min-width:0; }
+.product-name { font-weight:600; font-size:.9rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-sku  { font-size:.74rem; color:#9ca3af; margin-top:1px; }
+.product-right { text-align:right; flex-shrink:0; }
+.product-qty   { font-size:1.1rem; font-weight:800; }
+.badge-status {
+    display:inline-block; padding:3px 9px; border-radius:20px;
+    font-size:.7rem; font-weight:700; margin-top:3px;
+}
+.badge-critical   { background:#fef2f2; color:#dc2626; }
+.badge-low        { background:#fffbeb; color:#d97706; }
+.badge-decreasing { background:#f5f3ff; color:#7c3aed; }
+.badge-ok         { background:#ecfdf5; color:#059669; }
+
+/* ── AI Analysis Panel ── */
+.ai-panel { grid-column:1/-1; }
+.ai-panel-inner {
+    background: linear-gradient(135deg,#0f172a,#1e293b);
+    border-radius:16px; overflow:hidden;
+    box-shadow:0 4px 24px rgba(0,0,0,.15);
+}
+.ai-panel-header {
+    padding:16px 24px; display:flex; align-items:center; gap:12px;
+    border-bottom:1px solid rgba(255,255,255,.07);
+    background:rgba(255,255,255,.04);
+}
+.ai-panel-header h5 { margin:0; color:#fff; font-size:1rem; font-weight:700; }
+.ai-panel-body { padding:22px 26px; }
+.ai-output {
+    color:#e2e8f0; line-height:1.8; font-size:.92rem;
+    font-family:'Inter',sans-serif;
+}
+.ai-output h1,.ai-output h2,.ai-output h3 { color:#f8fafc; margin:16px 0 8px; font-weight:700; }
+.ai-output h1{font-size:1.15rem;} .ai-output h2{font-size:1.05rem;} .ai-output h3{font-size:.95rem;}
+.ai-output p  { margin:6px 0; }
+.ai-output ul,.ai-output ol { padding-left:22px; margin:6px 0; }
+.ai-output li { margin:4px 0; }
+.ai-output strong { color:#fff; font-weight:700; }
+.ai-output em     { color:#94a3b8; }
+.ai-output code   { background:rgba(255,255,255,.1); padding:2px 7px; border-radius:5px; font-size:.83rem; }
+.ai-output pre    { background:#0f172a; padding:14px; border-radius:10px; overflow-x:auto; }
+.ai-output hr     { border-color:rgba(255,255,255,.1); margin:16px 0; }
+.ai-output blockquote{ border-left:3px solid #ef4444; padding-left:14px; color:#94a3b8; margin:10px 0; }
+
+/* ── Loader ── */
+.loader-wrap { text-align:center; padding:48px 24px; }
+.spinner {
+    width:48px; height:48px; border-radius:50%;
+    border:4px solid rgba(239,68,68,.2);
+    border-top-color:#ef4444;
+    animation:spin .8s linear infinite;
+    margin:0 auto 16px;
+}
+@keyframes spin{ to{transform:rotate(360deg)} }
+.loader-text { color:#cbd5e1; font-size:.9rem; }
+
+/* ── Empty / Idle ── */
+.idle-box { text-align:center; padding:48px 24px; }
+.idle-icon { font-size:3rem; margin-bottom:14px; }
+.idle-box p { color:#64748b; font-size:.92rem; line-height:1.6; max-width:380px; margin:0 auto; }
+
+/* ── Trend sparkline ── */
+.sparkline { display:inline-flex; align-items:flex-end; gap:2px; height:22px; margin-left:8px; }
+.spark-bar { width:5px; border-radius:2px; background:#10b981; transition:background .3s; }
+.spark-dec { background:#ef4444; } .spark-mix { background:#f59e0b; }
+
+/* ── Stock history ── */
+.history-pills{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.history-pill{
+    padding:2px 8px; border-radius:20px; font-size:.7rem; font-weight:600;
+    background:#f1f5f9; color:#475569;
+}
+</style>
+
+<div class="monitor-wrap">
+
+    <!-- Header -->
+    <div class="monitor-header">
+        <div class="monitor-header-left">
+            <div class="monitor-icon">🔔</div>
+            <div>
+                <h2>Inventory Monitor</h2>
+                <p>AI-powered • Real-time stock alerts & trend detection via Groq</p>
+            </div>
+        </div>
+        <button class="run-btn" id="analyzeBtn" onclick="runAnalysis()">
+            <i class="bi bi-play-fill"></i> Run AI Analysis
+        </button>
+    </div>
+
+    <!-- Stat cards (updated after analysis) -->
+    <div class="stat-grid" id="statGrid" style="display:none;">
+        <div class="stat-card total-c">
+            <div class="stat-label">Total Products</div>
+            <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card critical">
+            <div class="stat-label">🚨 Critical</div>
+            <div class="stat-value" id="statCritical">0</div>
+        </div>
+        <div class="stat-card low">
+            <div class="stat-label">⚠️ Low Stock</div>
+            <div class="stat-value" id="statLow">0</div>
+        </div>
+        <div class="stat-card decreasing">
+            <div class="stat-label">📉 Decreasing</div>
+            <div class="stat-value" id="statDecreasing">0</div>
+        </div>
+        <div class="stat-card ok">
+            <div class="stat-label">✅ Healthy</div>
+            <div class="stat-value" id="statOk">0</div>
+        </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="monitor-grid" id="monitorGrid" style="display:none;">
+
+        <!-- Left: stock alert list -->
+        <div class="panel">
+            <div class="panel-header">
+                <span style="font-size:20px;">📦</span>
+                <h5>Stock Status</h5>
+                <span class="panel-badge" style="background:#f1f5f9;color:#64748b;" id="productCountBadge">0 products</span>
+            </div>
+            <div class="panel-body" id="productList"></div>
+        </div>
+
+        <!-- Right: raw history -->
+        <div class="panel">
+            <div class="panel-header">
+                <span style="font-size:20px;">📈</span>
+                <h5>Stock History</h5>
+                <span class="panel-badge" style="background:#eff6ff;color:#3b82f6;">Snapshots</span>
+            </div>
+            <div class="panel-body" id="historyList"></div>
+        </div>
+
+        <!-- Full-width AI analysis -->
+        <div class="ai-panel">
+            <div class="ai-panel-inner">
+                <div class="ai-panel-header">
+                    <span style="font-size:22px;">🤖</span>
+                    <h5>AI Monitoring Report</h5>
+                    <span style="margin-left:auto;background:rgba(239,68,68,.15);color:#fca5a5;padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;">Powered by Groq</span>
+                </div>
+                <div class="ai-panel-body">
+                    <div id="aiOutput" class="ai-output">
+                        <div class="idle-box">
+                            <div class="idle-icon">🛡️</div>
+                            <p>Click <strong>Run AI Analysis</strong> to detect low stock and decreasing trends using your real inventory data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Idle state (before first run) -->
+    <div id="idleState" class="panel" style="margin-top:0;">
+        <div class="panel-body">
+            <div class="idle-box">
+                <div class="idle-icon">🔭</div>
+                <p>No analysis has been run yet.<br>Click <strong>Run AI Analysis</strong> above to start monitoring your inventory in real time.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const csrfToken = "{{ csrf_token() }}";
+
+function classifyProduct(p) {
+    const stock    = p.current_stock;
+    const history  = p.previous_stock || [];
+    let trend = "stable";
+    if (history.length >= 2) {
+        const dec = history.slice(1).filter((v,i)=>v<history[i]).length;
+        const ratio = dec / (history.length-1);
+        trend = ratio >= 0.7 ? "decreasing" : ratio <= 0.3 ? "stable" : "mixed";
+    }
+    const isLow  = stock < 20;
+    if (isLow && trend === "decreasing") return "critical";
+    if (isLow)                           return "low";
+    if (trend === "decreasing")          return "decreasing";
+    return "ok";
+}
+
+function sparkBars(history) {
+    if (!history || history.length < 2) return "";
+    const max = Math.max(...history, 1);
+    return `<span class="sparkline">${history.slice(-8).map((v,i,arr)=>{
+        const cls = i>0 && v<arr[i-1] ? "spark-dec" : "spark-bar";
+        const h   = Math.max(4, Math.round((v/max)*20));
+        return `<span class="spark-bar ${cls}" style="height:${h}px"></span>`;
+    }).join("")}</span>`;
+}
+
+function renderProductList(products) {
+    const container = document.getElementById("productList");
+    if (!products.length) {
+        container.innerHTML = '<div class="idle-box"><div class="idle-icon">📭</div><p>No inventory items found. Add products first.</p></div>';
+        return;
+    }
+    document.getElementById("productCountBadge").textContent = products.length + " products";
+
+    // sort: critical first
+    const order = {critical:0,low:1,decreasing:2,ok:3};
+    const sorted = [...products].sort((a,b)=>order[classifyProduct(a)]-order[classifyProduct(b)]);
+
+    container.innerHTML = sorted.map(p=>{
+        const cls = classifyProduct(p);
+        const icons     = {critical:"🚨",low:"⚠️",decreasing:"📉",ok:"✅"};
+        const dotCls    = {critical:"dot-critical",low:"dot-low",decreasing:"dot-decreasing",ok:"dot-ok"};
+        const badgeCls  = {critical:"badge-critical",low:"badge-low",decreasing:"badge-decreasing",ok:"badge-ok"};
+        const labels    = {critical:"🚨 Critical",low:"⚠️ Low Stock",decreasing:"📉 Decreasing",ok:"✅ Healthy"};
+        const qtyColor  = {critical:"#ef4444",low:"#f59e0b",decreasing:"#7c3aed",ok:"#10b981"};
+        return `
+        <div class="product-row">
+            <div class="product-dot ${dotCls[cls]}">${icons[cls]}</div>
+            <div class="product-info">
+                <div class="product-name">${p.name}${sparkBars(p.previous_stock)}</div>
+                <div class="product-sku">SKU: ${p.sku}</div>
+            </div>
+            <div class="product-right">
+                <div class="product-qty" style="color:${qtyColor[cls]}">${p.current_stock}</div>
+                <span class="badge-status ${badgeCls[cls]}">${labels[cls]}</span>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function renderHistoryList(products) {
+    const container = document.getElementById("historyList");
+    const withHistory = products.filter(p=>p.previous_stock&&p.previous_stock.length>0);
+    if (!withHistory.length) {
+        container.innerHTML = '<div class="idle-box"><div class="idle-icon">📊</div><p>No historical data yet. Stock history is recorded each time you add or update an item\'s quantity.</p></div>';
+        return;
+    }
+    container.innerHTML = withHistory.map(p=>`
+        <div class="product-row">
+            <div class="product-dot" style="background:#f8fafc;font-size:15px;">📋</div>
+            <div class="product-info">
+                <div class="product-name">${p.name}</div>
+                <div class="history-pills">
+                    ${p.previous_stock.map((v,i)=>
+                        `<span class="history-pill">#${i+1}: ${v}</span>`
+                    ).join("")}
+                    <span class="history-pill" style="background:#e0f2fe;color:#0369a1;">Now: ${p.current_stock}</span>
+                </div>
+            </div>
+        </div>`).join("");
+}
+
+async function runAnalysis() {
+    const btn = document.getElementById("analyzeBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<div style="width:18px;height:18px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;"></div> Analyzing…';
+
+    document.getElementById("aiOutput").innerHTML = `
+        <div class="loader-wrap">
+            <div class="spinner"></div>
+            <div class="loader-text">AI is reading your inventory database and detecting anomalies…</div>
+        </div>`;
+
+    document.getElementById("idleState").style.display = "none";
+    document.getElementById("statGrid").style.display  = "grid";
+    document.getElementById("monitorGrid").style.display= "grid";
+
+    try {
+        const res  = await fetch("/inventory-monitor/analyze",{
+            method:"POST",
+            headers:{"Content-Type":"application/json","X-CSRFToken":csrfToken},
+            body:JSON.stringify({})
+        });
+        const data = await res.json();
+
+        // Stats
+        const s = data.summary;
+        document.getElementById("statTotal").textContent     = s.total;
+        document.getElementById("statCritical").textContent  = s.critical_count;
+        document.getElementById("statLow").textContent       = s.low_stock_count;
+        document.getElementById("statDecreasing").textContent= s.decreasing_count;
+        document.getElementById("statOk").textContent        = s.ok_count;
+
+        // Product list + history
+        renderProductList(data.raw_data.products || []);
+        renderHistoryList(data.raw_data.products || []);
+
+        // AI Report
+        document.getElementById("aiOutput").innerHTML = marked.parse(data.ai_analysis || "No response.");
+
+    } catch(err){
+        document.getElementById("aiOutput").innerHTML =
+            `<p style="color:#fca5a5;">⚠️ Network error: ${err.message}</p>`;
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Re-run Analysis';
+}
+</script>
+
+{% endblock %}

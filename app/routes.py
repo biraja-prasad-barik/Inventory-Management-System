@@ -1,7 +1,7 @@
 # app/routes.py
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
-from .models import Item, Customer, Invoice
+from .models import Item, Customer, Invoice, StockHistory
 from .forms import ItemForm
 from . import db 
 
@@ -52,6 +52,10 @@ def add_item():
         )
         try:
             db.session.add(item)
+            db.session.flush()  # Get item.id before commit
+            # Record initial stock snapshot
+            history = StockHistory(item_id=item.id, quantity=item.quantity)
+            db.session.add(history)
             db.session.commit()
             flash('Item added successfully!', 'success')
             return redirect(url_for('main.inventory'))
@@ -75,6 +79,9 @@ def edit_item(item_id):
         item.price = form.price.data
         
         try:
+            # Record stock snapshot on every update
+            history = StockHistory(item_id=item.id, quantity=form.quantity.data)
+            db.session.add(history)
             db.session.commit()
             flash('Item updated successfully!', 'success')
             return redirect(url_for('main.inventory'))

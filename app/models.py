@@ -24,10 +24,27 @@ class Item(db.Model):
     sku = db.Column(db.String(100), unique=True, nullable=False)
     quantity = db.Column(db.Integer, default=0)
     price = db.Column(db.Float, default=0.0)
-    
+    stock_history = db.relationship('StockHistory', backref='item', lazy=True,
+                                    cascade='all, delete-orphan',
+                                    order_by='StockHistory.recorded_at')
+
     @property
     def value(self):
         return self.quantity * self.price
+
+
+class StockHistory(db.Model):
+    """Records a stock snapshot every time an item quantity changes."""
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'quantity': self.quantity,
+            'recorded_at': self.recorded_at.strftime('%Y-%m-%d %H:%M') if self.recorded_at else 'N/A'
+        }
 
 
 class Customer(db.Model):

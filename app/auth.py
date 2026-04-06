@@ -1,6 +1,6 @@
 # app/auth.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user, login_required
 from .models import User
 from .forms import LoginForm, SignupForm
 from . import db

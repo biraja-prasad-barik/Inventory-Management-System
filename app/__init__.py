@@ -37,11 +37,11 @@ def create_app():
     with app.app_context():
         from .routes import main
         from .auth import auth
+        from .ai_assistant import ai
+        from .inventory_monitor import monitor
         app.register_blueprint(main)
         app.register_blueprint(auth)
+        app.register_blueprint(ai)
+        app.register_blueprint(monitor)
         db.create_all()
     return app
-
-# Create a default app instance for direct import
-# This allows 'from app import app' to work
-app = create_app()
