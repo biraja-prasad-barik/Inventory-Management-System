@@ -35,7 +35,7 @@ def signup():
     
     form = SignupForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data)
+        user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         
         try:

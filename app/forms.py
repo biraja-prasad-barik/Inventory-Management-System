@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, FloatField, SubmitField, PasswordField, BooleanField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from .models import User
 
 class ItemForm(FlaskForm):
@@ -19,6 +19,10 @@ class LoginForm(FlaskForm):
 
 
 class SignupForm(FlaskForm):
+    username = StringField('Username', validators=[
+        DataRequired(),
+        Length(min=2, max=80, message='Username must be between 2 and 80 characters')
+    ])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[
         DataRequired(), 
@@ -34,3 +38,20 @@ class SignupForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError('Email already registered. Please use a different email or login.')
+
+
+class ProfileForm(FlaskForm):
+    username = StringField('Username', validators=[
+        DataRequired(),
+        Length(min=2, max=80, message='Username must be between 2 and 80 characters')
+    ])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    current_password = PasswordField('Current Password (required to save changes)', validators=[DataRequired()])
+    new_password = PasswordField('New Password (leave blank to keep current)', validators=[
+        Optional(),
+        Length(min=6, message='Password must be at least 6 characters long')
+    ])
+    confirm_new_password = PasswordField('Confirm New Password', validators=[
+        EqualTo('new_password', message='Passwords must match')
+    ])
+    submit = SubmitField('Save Changes')

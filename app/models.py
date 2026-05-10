@@ -7,6 +7,7 @@ from datetime import datetime
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -65,4 +66,14 @@ class Invoice(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     
     customer = db.relationship('Customer', backref=db.backref('invoices', lazy=True))
+
+
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    amount = db.Column(db.Float, default=0.0)
+    category = db.Column(db.String(100), default='General')
+    description = db.Column(db.Text)
+    expense_date = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 

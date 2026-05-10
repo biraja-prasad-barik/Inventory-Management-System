@@ -235,9 +235,9 @@ def query_groq(user_message, business_data, conversation_history=None):
         return chat_completion.choices[0].message.content
 
     except ImportError:
-        return "⚠️ **Groq package not installed.**\n\nRun:\n```\npip install groq\n```"
+        return " **Groq package not installed.**\n\nRun:\n```\npip install groq\n```"
     except Exception as e:
-        return f"⚠️ **Error communicating with AI:**\n\n{str(e)}"
+        return f" **Error communicating with AI:**\n\n{str(e)}"
 
 
 @ai.route('/ai-assistant')
